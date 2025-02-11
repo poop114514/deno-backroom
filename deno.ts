@@ -1,43 +1,47 @@
 import { serve } from "https://deno.land/std/http/server.ts";
 
-const API_KEY = "AIzaSyAlD9wkqIvLbtY3-d8o1ztxxGhQze_DyaA"; // 替换为你的 API 密钥
-
-// 处理请求
+// 处理请求的函数
 const handleRequest = async (req: Request) => {
-    const headers = new Headers();
-    headers.set('Access-Control-Allow-Origin', '*'); // 允许所有来源
-    headers.set('Access-Control-Allow-Methods', 'POST');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  // 设置 CORS 响应头
+  const headers = new Headers();
+  headers.set('Access-Control-Allow-Origin', '*');  // 允许所有来源访问
+  headers.set('Access-Control-Allow-Methods', 'POST');  // 允许 POST 方法
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');  // 允许的请求头
 
-    // 如果是预检请求（CORS），直接返回
-    if (req.method === 'OPTIONS') {
-        return new Response(null, { headers });
-    }
+  // 如果是 OPTIONS 请求，返回空响应
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers });
+  }
 
-    // 处理 POST 请求
-    if (req.method === 'POST') {
-        try {
-            const { question } = await req.json();
+  // 处理 POST 请求
+  if (req.method === 'POST') {
+    try {
+      // 获取请求体内容
+      const { question } = await req.json();
 
-            // 调用 Gemini API 或其他外部服务
-            const answer = await callGeminiAPI(question);
-            
-            return new Response(JSON.stringify({ answer }), {
-                headers: { "Content-Type": "application/json" }
-            });
-        } catch (error) {
-            return new Response("Invalid request", { status: 400 });
+      // 生成一个模拟的答案
+      const answer = `这是你提问的答案：${question}`;
+
+      // 返回 JSON 格式的响应
+      return new Response(
+        JSON.stringify({ answer }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...headers,  // 保留 CORS 头
+          }
         }
+      );
+    } catch (error) {
+      // 捕获 JSON 解析错误或其他错误
+      return new Response("请求格式错误", { status: 400, headers });
     }
+  }
 
-    return new Response("Method Not Allowed", { status: 405 });
+  // 如果是其他方法，返回 405 Method Not Allowed
+  return new Response("Method Not Allowed", { status: 405, headers });
 };
 
-// 模拟调用 Gemini API（请替换为实际调用）
-const callGeminiAPI = async (question: string) => {
-    // 模拟外部 API 的调用，可以替换为实际的 API 调用代码
-    return `这是您问题 "${question}" 的回答！`;
-};
-
-// 启动服务器并监听请求
-serve(handleRequest);
+// 启动 HTTP 服务器并监听 8000 端口
+console.log("服务器启动，监听 8000 端口...");
+serve(handleRequest, { port: 8000 });
