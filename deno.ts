@@ -1,36 +1,46 @@
-mport { serve } from "https://deno.land/std/http/server.ts";
-import { parse } from "https://deno.land/std/encoding/json.ts";
+// 使用正确的 import 语法
+import { serve } from "https://deno.land/std/http/server.ts";
 
-const API_KEY = "AIzaSyD8MUNhsbpLb1YHRBB6ah2hQjbqln-QKS0"; // 你的 Gemini API 密钥
+const API_KEY = "AIzaSyAlD9wkqIvLbtY3-d8o1ztxxGhQze_DyaA"; // 替换为你实际的 API 密钥
 
+// CORS 设置：允许所有来源访问 API
 const handleRequest = async (req: Request) => {
-  if (req.method === "POST") {
-    const { headers, body } = req;
+  const headers = new Headers();
+  headers.set('Access-Control-Allow-Origin', '*');  // 可以指定具体域名代替 '*' 来限制跨域来源
+  headers.set('Access-Control-Allow-Methods', 'GET, POST');
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-    // 检查 API 密钥
-    const authHeader = headers.get("Authorization");
-    if (!authHeader || authHeader !== `Bearer ${API_KEY}`) {
-      return new Response("Unauthorized", { status: 401 });
-    }
-
-    // 解析请求的 JSON 数据
-    const { question } = await parse(body);
-
-    // 在此模拟与 Gemini API 的交互
-    const answer = await callGeminiAPI(question);
-
-    // 返回结果
-    return new Response(JSON.stringify({ answer }), {
-      headers: { "Content-Type": "application/json" },
-    });
+  // 处理 OPTIONS 请求（预检请求）
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers });
   }
+
+  // 处理 POST 请求
+  if (req.method === 'POST') {
+    try {
+      const { question } = await req.json();
+
+      // 调用 Gemini API 或处理逻辑
+      const answer = await callGeminiAPI(question);
+      
+      return new Response(JSON.stringify({ answer }), {
+        headers: { "Content-Type": "application/json" }
+      });
+    } catch (error) {
+      return new Response("Invalid request", { status: 400 });
+    }
+  }
+
+  // 处理不支持的方法
   return new Response("Method Not Allowed", { status: 405 });
 };
 
+// 示例函数，用于模拟调用 Gemini API
 const callGeminiAPI = async (question: string) => {
-  // 此处模拟调用 Gemini API，您可以根据实际 API 接口进行请求
-  // 假设调用返回了一个简答的回答
+  // 在此处替换为实际的 Gemini API 调用逻辑
+  // 这里只是一个示例，返回固定的答案
   return `这是您问题 "${question}" 的回答！`;
 };
 
+// 启动服务器并监听请求
 serve(handleRequest);
